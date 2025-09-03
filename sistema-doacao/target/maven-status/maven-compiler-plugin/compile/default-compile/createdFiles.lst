@@ -1,0 +1,13 @@
+com\trabalhogil\sistema_doacao\controller\OrdemDeServicoController.class
+com\trabalhogil\sistema_doacao\controller\OrdemDeServicoController$CriarOSRequest.class
+com\trabalhogil\sistema_doacao\model\OrdemDeServico.class
+com\trabalhogil\sistema_doacao\repository\TecnicoRepository.class
+com\trabalhogil\sistema_doacao\repository\ClienteRepository.class
+com\trabalhogil\sistema_doacao\controller\TecnicoController.class
+com\trabalhogil\sistema_doacao\repository\OrdemDeServicoRepository.class
+com\trabalhogil\sistema_doacao\controller\ClienteController.class
+com\trabalhogil\sistema_doacao\model\Tecnico.class
+com\trabalhogil\sistema_doacao\SistemaDoacaoApplication.class
+com\trabalhogil\sistema_doacao\controller\OrdemDeServicoController$StatusRequest.class
+com\trabalhogil\sistema_doacao\model\Cliente.class
+com\trabalhogil\sistema_doacao\controller\OrdemDeServicoWebController.class

@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Sistema de Doação - Teste</title>
+    <style>
+        * { box-sizing: border-box; }
+        #msg { display:none; padding:12px; margin:12px 0; border-radius:6px; font-weight:600; }
+        #msg.success { background:#d1fae5; color:#065f46; border:1px solid #10b981; }
+        #msg.error { background:#fee2e2; color:#991b1b; border:1px solid #ef4444; }
+        body { font-family: Arial, sans-serif; background: linear-gradient(135deg, #e0e7ff 0%, #e0f2fe 50%, #ecfeff 100%); color:#111827; min-height:100vh; }
+        .container { max-width: 1120px; margin: 0 auto; padding: 16px; width: 100%; }
+        h1 { margin: 16px 0 8px 0; font-size: 34px; font-weight: 800; letter-spacing: 0.3px; }
+        .title-gradient { background: linear-gradient(90deg, #1e40af, #0ea5e9); -webkit-background-clip: text; background-clip: text; color: transparent; }
+        .title-underline { height: 4px; width: 140px; background: linear-gradient(90deg, #1e40af, #0ea5e9); border-radius: 999px; margin: 6px 0 10px 0; }
+        .card { background:#ffffff; border:1px solid #cbd5e1; border-radius:10px; padding:16px; margin:16px 0; box-shadow: 0 2px 6px rgba(0,0,0,0.08); width: 100%; overflow: hidden; }
+        .card h2 { margin-top: 0; }
+        .row { display:flex; gap:16px; flex-wrap: wrap; align-items: stretch; }
+        .col { flex:1 1 0; min-width: 300px; }
+        label { display:block; margin-bottom:8px; }
+        input, select { width:100%; padding:10px; border:1px solid #94a3b8; border-radius:8px; }
+        button { background:#1e40af; color:#fff; border:none; padding:10px 16px; border-radius:8px; cursor:pointer; box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
+        button:hover { background:#1e3a8a; }
+        .table-wrap { background:#ffffff; border:1px solid #cbd5e1; border-radius:12px; overflow:hidden; box-shadow: 0 2px 6px rgba(0,0,0,0.06); width:100%; }
+        table { width:100%; border-collapse: collapse; background:#fff; table-layout: fixed; }
+        th, td { padding:12px; border-bottom:1px solid #e5e7eb; text-align:left; }
+        th { background:#e2e8f0; color:#0f172a; }
+        tr:last-child td { border-bottom: none; }
+    </style>
+</head>
+<body>
+<div class="container">
+<h1 class="title-gradient">Sistema de Doação - Ordens de Serviço</h1>
+<div class="title-underline"></div>
+
+<div id="msg"></div>
+
+<div class="row">
+  <div class="col">
+    <div class="card">
+      <h2>Cadastrar Cliente</h2>
+      <form id="formCliente">
+          <label>Nome
+              <input type="text" id="clienteNome" required>
+          </label>
+          <label>Email
+              <input type="email" id="clienteEmail" required>
+          </label>
+          <label>Telefone
+              <input type="text" id="clienteTelefone" required>
+          </label>
+          <button type="submit">Salvar Cliente</button>
+      </form>
+    </div>
+  </div>
+  <div class="col">
+    <div class="card">
+      <h2>Cadastrar Técnico</h2>
+      <form id="formTecnico">
+          <label>Nome
+              <input type="text" id="tecnicoNome" required>
+          </label>
+          <label>Especialidade
+              <input type="text" id="tecnicoEspecialidade" required>
+          </label>
+          <label>Telefone
+              <input type="text" id="tecnicoTelefone" required>
+          </label>
+          <button type="submit">Salvar Técnico</button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <h2>Cadastrar Nova Ordem</h2>
+  <form id="formNovaOS">
+      <label>Descrição
+          <input type="text" id="descricao" required>
+      </label>
+      <label>Cliente
+          <select id="clienteSelect" required></select>
+      </label>
+      <label>Técnico (opcional)
+          <select id="tecnicoSelect">
+              <option value="">-- sem técnico --</option>
+          </select>
+      </label>
+      <button type="submit">Salvar Ordem</button>
+  </form>
+  <div style="margin-top:8px">
+    <button onclick="carregarOrdens()">Carregar Ordens</button>
+  </div>
+  <div style="margin-top:12px" class="table-wrap">
+    <table id="tabelaOrdens">
+        <tr>
+            <th>ID</th>
+            <th>Descrição</th>
+            <th>Status</th>
+            <th>Cliente ID</th>
+            <th>Técnico ID</th>
+        </tr>
+    </table>
+  </div>
+</div>
+
+</div>
+
+<script>
+const API_BASE = window.location.protocol === 'file:' ? 'http://localhost:8080' : '';
+function showMessage(type, text, timeoutMs = 3500) {
+    const el = document.getElementById('msg');
+    el.className = type === 'success' ? 'success' : 'error';
+    el.textContent = text;
+    el.style.display = 'block';
+    if (timeoutMs) {
+        setTimeout(() => { el.style.display = 'none'; }, timeoutMs);
+    }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    carregarClientes();
+    carregarTecnicos();
+    carregarOrdens();
+});
+
+async function carregarClientes() {
+    const select = document.getElementById('clienteSelect');
+    select.innerHTML = '';
+    try {
+        const res = await fetch(`${API_BASE}/clientes`);
+        if (!res.ok) throw new Error(await res.text());
+        const clientes = await res.json();
+        clientes.forEach(c => {
+            const opt = document.createElement('option');
+            opt.value = c.id;
+            opt.textContent = `${c.id} - ${c.nome}`;
+            select.appendChild(opt);
+        });
+    } catch (e) {
+        showMessage('error', 'Erro ao carregar clientes');
+    }
+}
+
+async function carregarTecnicos() {
+    const select = document.getElementById('tecnicoSelect');
+    // mantém a primeira opção "sem técnico"
+    select.innerHTML = '<option value="">-- sem técnico --</option>';
+    try {
+        const res = await fetch(`${API_BASE}/tecnicos`);
+        if (!res.ok) throw new Error(await res.text());
+        const tecnicos = await res.json();
+        tecnicos.forEach(t => {
+            const opt = document.createElement('option');
+            opt.value = t.id;
+            opt.textContent = `${t.id} - ${t.nome}`;
+            select.appendChild(opt);
+        });
+    } catch (e) {
+        showMessage('error', 'Erro ao carregar técnicos');
+    }
+}
+
+// Função para carregar todas as OS
+async function carregarOrdens() {
+    const tabela = document.getElementById('tabelaOrdens');
+    tabela.innerHTML = `
+        <tr>
+            <th>ID</th>
+            <th>Descrição</th>
+            <th>Status</th>
+            <th>Cliente ID</th>
+            <th>Técnico ID</th>
+        </tr>
+    `;
+    try {
+        const res = await fetch(`${API_BASE}/os`);
+        if (!res.ok) throw new Error(await res.text());
+        const ordens = await res.json();
+        ordens.forEach(os => {
+            const row = tabela.insertRow();
+            row.insertCell(0).innerText = os.id;
+            row.insertCell(1).innerText = os.descricao;
+            row.insertCell(2).innerText = os.status;
+            row.insertCell(3).innerText = os.cliente ? os.cliente.id : '-';
+            row.insertCell(4).innerText = os.tecnico ? os.tecnico.id : '-';
+        });
+    } catch (e) {
+        showMessage('error', 'Erro ao carregar ordens');
+    }
+}
+
+// Função para enviar nova OS
+document.getElementById('formNovaOS').addEventListener('submit', async function(e) {
+    e.preventDefault();
+
+    const descricao = document.getElementById('descricao').value;
+    const clienteId = parseInt(document.getElementById('clienteSelect').value);
+    const tecnicoIdValue = document.getElementById('tecnicoSelect').value;
+    const tecnicoId = tecnicoIdValue ? parseInt(tecnicoIdValue) : null;
+
+    const corpo = { descricao, clienteId };
+    if (tecnicoId) corpo.tecnicoId = tecnicoId;
+
+    try {
+        const res = await fetch(`${API_BASE}/os`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(corpo)
+        });
+        if (!res.ok) {
+            const erro = await res.text();
+            showMessage('error', 'Erro ao criar ordem: ' + erro);
+            return;
+        }
+        showMessage('success', 'Ordem criada com sucesso!');
+        carregarOrdens();
+        this.reset();
+        carregarClientes();
+        carregarTecnicos();
+    } catch (e) {
+        showMessage('error', 'Falha de rede ao criar ordem');
+    }
+});
+
+// Cadastro de Cliente
+document.getElementById('formCliente').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const nome = document.getElementById('clienteNome').value;
+    const email = document.getElementById('clienteEmail').value;
+    const telefone = document.getElementById('clienteTelefone').value;
+    try {
+        const res = await fetch(`${API_BASE}/clientes`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ nome, email, telefone })
+        });
+        if (!res.ok) {
+            const erro = await res.text();
+            showMessage('error', 'Erro ao salvar cliente: ' + erro);
+            return;
+        }
+        showMessage('success', 'Cliente salvo!');
+        this.reset();
+        carregarClientes();
+    } catch (e) {
+        showMessage('error', 'Falha de rede ao salvar cliente');
+    }
+});
+
+// Cadastro de Técnico
+document.getElementById('formTecnico').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const nome = document.getElementById('tecnicoNome').value;
+    const especialidade = document.getElementById('tecnicoEspecialidade').value;
+    const telefone = document.getElementById('tecnicoTelefone').value;
+    try {
+        const res = await fetch(`${API_BASE}/tecnicos`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ nome, especialidade, telefone })
+        });
+        if (!res.ok) {
+            const erro = await res.text();
+            showMessage('error', 'Erro ao salvar técnico: ' + erro);
+            return;
+        }
+        showMessage('success', 'Técnico salvo!');
+        this.reset();
+        carregarTecnicos();
+    } catch (e) {
+        showMessage('error', 'Falha de rede ao salvar técnico');
+    }
+});
+</script>
+
+</body>
+</html>
