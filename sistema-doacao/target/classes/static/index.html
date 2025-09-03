@@ -72,15 +72,18 @@
 </div>
 
 <div class="card">
-  <h2>Cadastrar Nova Ordem</h2>
+  <h2>Cadastrar Nova Doação</h2>
   <form id="formNovaOS">
       <label>Descrição
           <input type="text" id="descricao" required>
       </label>
+      <label>Quantidade de Doações
+          <input type="number" id="quantidadeDoacoes" min="0" step="1" placeholder="0" required>
+      </label>
       <label>Cliente
           <select id="clienteSelect" required></select>
       </label>
-      <label>Técnico (opcional)
+      <label>Voluntário (opcional)
           <select id="tecnicoSelect">
               <option value="">-- sem técnico --</option>
           </select>
@@ -97,7 +100,9 @@
             <th>Descrição</th>
             <th>Status</th>
             <th>Cliente ID</th>
-            <th>Técnico ID</th>
+            <th>Voluntário ID</th>
+            <th>Qtd. Doações</th>
+            <th>Ações</th>
         </tr>
     </table>
   </div>
@@ -144,7 +149,7 @@ async function carregarClientes() {
 async function carregarTecnicos() {
     const select = document.getElementById('tecnicoSelect');
     // mantém a primeira opção "sem técnico"
-    select.innerHTML = '<option value="">-- sem técnico --</option>';
+    select.innerHTML = '<option value="">-- sem voluntário --</option>';
     try {
         const res = await fetch(`${API_BASE}/tecnicos`);
         if (!res.ok) throw new Error(await res.text());
@@ -152,7 +157,7 @@ async function carregarTecnicos() {
         tecnicos.forEach(t => {
             const opt = document.createElement('option');
             opt.value = t.id;
-            opt.textContent = `${t.id} - ${t.nome}`;
+            opt.textContent = `${t.id} - ${t.nome} (Voluntário)`;
             select.appendChild(opt);
         });
     } catch (e) {
@@ -169,7 +174,9 @@ async function carregarOrdens() {
             <th>Descrição</th>
             <th>Status</th>
             <th>Cliente ID</th>
-            <th>Técnico ID</th>
+            <th>Voluntário ID</th>
+            <th>Qtd. Doações</th>
+            <th>Ações</th>
         </tr>
     `;
     try {
@@ -183,6 +190,18 @@ async function carregarOrdens() {
             row.insertCell(2).innerText = os.status;
             row.insertCell(3).innerText = os.cliente ? os.cliente.id : '-';
             row.insertCell(4).innerText = os.tecnico ? os.tecnico.id : '-';
+            row.insertCell(5).innerText = (os.quantidadeDoacoes !== null && os.quantidadeDoacoes !== undefined) ? os.quantidadeDoacoes : '-';
+            
+            // Botão de deletar
+            const deleteCell = row.insertCell(6);
+            const deleteBtn = document.createElement('button');
+            deleteBtn.textContent = 'Deletar';
+            deleteBtn.style.background = '#dc2626';
+            deleteBtn.style.margin = '2px';
+            deleteBtn.style.padding = '6px 12px';
+            deleteBtn.style.fontSize = '12px';
+            deleteBtn.onclick = () => deletarOrdem(os.id);
+            deleteCell.appendChild(deleteBtn);
         });
     } catch (e) {
         showMessage('error', 'Erro ao carregar ordens');
@@ -194,11 +213,12 @@ document.getElementById('formNovaOS').addEventListener('submit', async function(
     e.preventDefault();
 
     const descricao = document.getElementById('descricao').value;
+    const quantidadeDoacoes = parseInt(document.getElementById('quantidadeDoacoes').value);
     const clienteId = parseInt(document.getElementById('clienteSelect').value);
     const tecnicoIdValue = document.getElementById('tecnicoSelect').value;
     const tecnicoId = tecnicoIdValue ? parseInt(tecnicoIdValue) : null;
 
-    const corpo = { descricao, clienteId };
+    const corpo = { descricao, clienteId, quantidadeDoacoes };
     if (tecnicoId) corpo.tecnicoId = tecnicoId;
 
     try {
@@ -271,6 +291,25 @@ document.getElementById('formTecnico').addEventListener('submit', async function
         showMessage('error', 'Falha de rede ao salvar técnico');
     }
 });
+
+async function deletarOrdem(id) {
+    if (confirm('Tem certeza que deseja deletar esta ordem de serviço?')) {
+        try {
+            const res = await fetch(`${API_BASE}/os/${id}`, {
+                method: 'DELETE'
+            });
+            if (!res.ok) {
+                const erro = await res.text();
+                showMessage('error', 'Erro ao deletar ordem: ' + erro);
+                return;
+            }
+            showMessage('success', 'Ordem deletada com sucesso!');
+            carregarOrdens();
+        } catch (e) {
+            showMessage('error', 'Falha de rede ao deletar ordem');
+        }
+    }
+}
 </script>
 
 </body>

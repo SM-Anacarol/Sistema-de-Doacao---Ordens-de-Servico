@@ -11,6 +11,9 @@ public class OrdemDeServico {
 
     private String descricao;
 
+    // Quantidade de itens/doações vinculadas à OS
+    private Integer quantidadeDoacoes = 0;
+
     private String status; // pode ser "ABERTA" ou "FECHADA"
 
     // Relação: muitas OS podem estar ligadas a 1 cliente
@@ -57,5 +60,13 @@ public class OrdemDeServico {
     }
     public void setTecnico(Tecnico tecnico) {
         this.tecnico = tecnico;
+    }
+
+    public Integer getQuantidadeDoacoes() {
+        return quantidadeDoacoes;
+    }
+
+    public void setQuantidadeDoacoes(Integer quantidadeDoacoes) {
+        this.quantidadeDoacoes = quantidadeDoacoes;
     }
 }

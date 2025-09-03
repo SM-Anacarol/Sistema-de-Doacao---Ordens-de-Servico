@@ -50,6 +50,10 @@ public class OrdemDeServicoController {
         os.setDescricao(req.descricao);
         os.setStatus("ABERTA");
         os.setCliente(cOpt.get());
+        if (req.quantidadeDoacoes != null && req.quantidadeDoacoes < 0) {
+            return ResponseEntity.badRequest().body("quantidadeDoacoes inválida");
+        }
+        os.setQuantidadeDoacoes(req.quantidadeDoacoes);
 
         if (req.tecnicoId != null) {
             Optional<Tecnico> tOpt = tecnicoRepository.findById(req.tecnicoId);
@@ -81,11 +85,23 @@ public class OrdemDeServicoController {
         return osRepository.findByStatus(status);
     }
 
+    // Deletar OS
+    @DeleteMapping("/{id}")
+    public ResponseEntity<?> deletar(@PathVariable Long id) {
+        Optional<OrdemDeServico> osOpt = osRepository.findById(id);
+        if (osOpt.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+        osRepository.deleteById(id);
+        return ResponseEntity.ok().build();
+    }
+
     // DTOs simples como classes estáticas (Jackson mapeia automaticamente)
     public static class CriarOSRequest {
         public String descricao;
         public Long clienteId;
         public Long tecnicoId;
+        public Integer quantidadeDoacoes;
     }
 
     public static class StatusRequest {
